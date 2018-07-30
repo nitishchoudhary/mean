@@ -1,6 +1,7 @@
 import { Message } from "./message.model";
-import { Http } from '@angular/http';
+import { Http, Response } from '@angular/http';
 import { Injectable } from "@angular/core";
+import { Headers, RequestOptions } from '@angular/http';
 import 'rxjs/Rx';
 import { Observable } from 'rxjs';
 import { error } from "util";
@@ -14,10 +15,12 @@ export class MessageService {
     addMessage(message: Message){
         this.messages.push(message);
         const body = JSON.stringify(message);
-        const headers = new Headers({'Content-Type':'application/json'});
-        this.http.post('http://localhost:3000/message', body)
-        .map((response: Response) => response.json())
-        .catch((error: Response) => Observable.throw(error.json));
+        const url = 'http://localhost:3000/message';
+        let headers = new Headers({ 'Content-Type': 'application/json' });
+        let options = new RequestOptions({ headers: headers });
+        this.http.post(url, body, options)
+        .map(this.extractData)
+        .catch(this.handleErrorObservable);
         
     }
 
@@ -28,5 +31,15 @@ export class MessageService {
     deleteMessage(message: Message){
         this.messages.splice(this.messages.indexOf(message), 1);
     }
+
+    extractData(res: Response) {
+        let body = res.json();
+        return body || {};
+    }
+
+    handleErrorObservable (error: Response | any) {
+        console.error(error.message || error);
+        return Observable.throw(error.message || error);
+    } 
 }
 
